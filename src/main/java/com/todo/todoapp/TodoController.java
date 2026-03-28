@@ -23,4 +23,16 @@ public class TodoController {
     public Todo createTodo(@RequestBody Todo todo) {
         return todoRepository.save(todo);
     }
+
+    @PatchMapping("/{id}/complete")
+    public Todo markAsCompleted(@PathVariable Long id) {
+        Todo todo = todoRepository.findById(id).orElseThrow(() -> new RuntimeException("Złe id"));
+        todo.setCompleted(true);
+        return todoRepository.save(todo);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Todo> getTodosByUser(@PathVariable Long userId) {
+        return todoRepository.findByUserId(userId);
+    }
 }
