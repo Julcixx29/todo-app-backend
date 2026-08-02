@@ -11,10 +11,8 @@ public class Todo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String title;
-
-    private boolean completed = false;
+    private boolean completed;
 
     private LocalDateTime dueDate;
 
