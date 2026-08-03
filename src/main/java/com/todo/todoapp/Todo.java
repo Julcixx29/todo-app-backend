@@ -1,6 +1,9 @@
 package com.todo.todoapp;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 import java.time.LocalDateTime;
 
 
@@ -11,7 +14,11 @@ public class Todo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Tytuł nie moze być pusty")
+    @Size(max = 100, message = "Tytuł moze mieć maksymalnie 100 znaków")
+    @Column(nullable = false)
     private String title;
+
     private boolean completed;
 
     private LocalDateTime dueDate;

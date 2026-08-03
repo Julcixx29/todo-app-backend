@@ -1,4 +1,5 @@
 package com.todo.todoapp;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class TodoController {
     }
 
     @PostMapping("/user/{userId}")
-    public Todo createTodo(@PathVariable Long userId, @RequestBody Todo todo) {
+    public Todo createTodo(@PathVariable Long userId, @Valid @RequestBody Todo todo) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         todo.setUser(user);
