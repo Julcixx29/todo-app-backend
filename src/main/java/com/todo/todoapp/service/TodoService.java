@@ -79,4 +79,32 @@ public class TodoService {
         Todo saved = todoRepository.save(todo);
         return mapToDto(saved);
     }
+
+    public List<TodoResponseDto> getCompletedTodos(Long userId) {
+        return todoRepository.findByUserIdAndCompleted(userId, true)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public List<TodoResponseDto> getPendingTodos(Long userId) {
+       return todoRepository.findByUserIdAndCompleted(userId, false)
+               .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public List<TodoResponseDto> getTodosSortedByDueDate(Long userId) {
+        return todoRepository.findByUserIdOrderByDueDateAsc(userId)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public List<TodoResponseDto> searchTodos(Long userId, String title) {
+        return todoRepository.findByUserIdAndTitleContainingIgnoreCase(userId, title)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
 }

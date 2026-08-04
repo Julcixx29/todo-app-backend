@@ -47,4 +47,24 @@ public class TodoController {
     public TodoResponseDto markAsCompleted(@PathVariable Long id) {
         return todoService.markAsCompleted(id);
     }
+
+    @GetMapping("/user/{userId}/completed")
+    public List<TodoResponseDto> getCompletedTodos(@PathVariable Long userId) {
+        return todoService.getCompletedTodos(userId);
+    }
+
+    @GetMapping("/user/{userId}/pending")
+    public List<TodoResponseDto> getPendingTodos(@PathVariable Long userId) {
+        return todoService.getPendingTodos(userId);
+    }
+
+    @GetMapping("/user/{userId}/sorted")
+    public List<TodoResponseDto> getSortedTodos(@PathVariable Long userId) {
+        return todoService.getTodosSortedByDueDate(userId);
+    }
+
+    @GetMapping("/user/{userId}/search")
+    public List<TodoResponseDto> searchTodos(@PathVariable Long userId, @RequestParam String title) {
+        return todoService.searchTodos(userId, title);
+    }
 }
