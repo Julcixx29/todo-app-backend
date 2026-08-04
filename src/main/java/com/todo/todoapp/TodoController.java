@@ -4,6 +4,7 @@ import com.todo.todoapp.dto.TodoResponseDto;
 import com.todo.todoapp.dto.UpdateTodoRequest;
 import com.todo.todoapp.service.TodoService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -66,5 +67,10 @@ public class TodoController {
     @GetMapping("/user/{userId}/search")
     public List<TodoResponseDto> searchTodos(@PathVariable Long userId, @RequestParam String title) {
         return todoService.searchTodos(userId, title);
+    }
+
+    @GetMapping("/user/{userId}/page")
+    public Page<TodoResponseDto> getTodosPage(@PathVariable Long userId, @RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "5") int page, @RequestParam(defaultValue = "5") int size, @RequestParam(defaultValue = "dueDate") String sortBy, @RequestParam(defaultValue = "asc") String direction) {
+        return todoService.getTodosPage(userId, page, size, sortBy, direction);
     }
 }
