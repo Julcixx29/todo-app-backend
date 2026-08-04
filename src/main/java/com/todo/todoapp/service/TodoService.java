@@ -1,5 +1,7 @@
 package com.todo.todoapp.service;
+import com.todo.todoapp.dto.CreateTodoRequest;
 import com.todo.todoapp.dto.TodoResponseDto;
+import com.todo.todoapp.dto.UpdateTodoRequest;
 import com.todo.todoapp.exception.UserNotFoundException;
 import com.todo.todoapp.exception.TodoNotFoundException;
 import com.todo.todoapp.*;
@@ -31,10 +33,14 @@ public class TodoService {
                 .toList();
     }
 
-    public TodoResponseDto createTodo(Long userId, Todo todo) {
+    public TodoResponseDto createTodo(Long userId, CreateTodoRequest request) {
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
+        Todo todo = new Todo();
+        todo.setTitle(request.getTitle());
+        todo.setDueDate(request.getDueDate());
         todo.setUser(user);
+
         Todo saved = todoRepository.save(todo);
         return mapToDto(saved);
     }
@@ -62,5 +68,15 @@ public class TodoService {
                 todo.getDueDate(),
                 todo.getUser().getUsername()
         );
+    }
+
+    public TodoResponseDto updateTodo(Long id, UpdateTodoRequest request) {
+        Todo todo = todoRepository.findById(id).orElseThrow(() -> new TodoNotFoundException(id));
+
+        todo.setTitle(request.getTitle());
+        todo.setDueDate(request.getDueDate());
+
+        Todo saved = todoRepository.save(todo);
+        return mapToDto(saved);
     }
 }

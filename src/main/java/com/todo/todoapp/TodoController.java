@@ -1,5 +1,7 @@
 package com.todo.todoapp;
+import com.todo.todoapp.dto.CreateTodoRequest;
 import com.todo.todoapp.dto.TodoResponseDto;
+import com.todo.todoapp.dto.UpdateTodoRequest;
 import com.todo.todoapp.service.TodoService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -27,8 +29,8 @@ public class TodoController {
     }
 
     @PostMapping("/user/{userId}")
-    public TodoResponseDto createTodo(@PathVariable Long userId, @Valid @RequestBody Todo todo) {
-        return todoService.createTodo(userId, todo);
+    public TodoResponseDto createTodo(@PathVariable Long userId, @Valid @RequestBody CreateTodoRequest request) {
+        return todoService.createTodo(userId, request);
     }
 
     @DeleteMapping("/{id}")
@@ -36,13 +38,10 @@ public class TodoController {
         todoService.deleteTodo(id);
     }
 
-//    @PutMapping("/{id}")
-//    public Todo updateTodo(@PathVariable Long id, @RequestBody Todo updateTodo) {
-//        Todo todo = todoRepository.findById(id).orElseThrow(() -> new RuntimeException("Todo not found"));
-//
-//        todo.setTitle(updateTodo.getTitle());
-//        return todoRepository.save(updateTodo);
-//    }
+    @PutMapping("/{id}")
+    public TodoResponseDto updateTodo(@PathVariable Long id, @Valid @RequestBody UpdateTodoRequest request) {
+        return todoService.updateTodo(id, request);
+    }
 
     @PatchMapping("/{id}/complete")
     public TodoResponseDto markAsCompleted(@PathVariable Long id) {
