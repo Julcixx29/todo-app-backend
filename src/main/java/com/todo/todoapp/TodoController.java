@@ -70,7 +70,13 @@ public class TodoController {
     }
 
     @GetMapping("/user/{userId}/page")
-    public Page<TodoResponseDto> getTodosPage(@PathVariable Long userId, @RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "5") int page, @RequestParam(defaultValue = "5") int size, @RequestParam(defaultValue = "dueDate") String sortBy, @RequestParam(defaultValue = "asc") String direction) {
+    public Page<TodoResponseDto> getTodosPage(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "dueDate") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
+
         return todoService.getTodosPage(userId, page, size, sortBy, direction);
     }
 }
