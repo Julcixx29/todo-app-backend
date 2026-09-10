@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import java.util.List;
 
 import static org.mockito.Mockito.when;
-
+import com.todo.todoapp.exception.UsernameAlreadyExistsException;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -76,5 +76,23 @@ public class UserControllerTest {
                             }
                             """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldRejectDuplicateUsername() throws Exception {
+        when(userService.createUser(any(User.class)))
+                .thenThrow(new UsernameAlreadyExistsException("julia"));
+
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "username": "julia",
+                                "password": "test123"
+                            }
+                            """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error")
+                        .value("Username 'julia' jest już zajęty"));
     }
 }

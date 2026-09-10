@@ -2,6 +2,7 @@ package com.todo.todoapp.service;
 
 import com.todo.todoapp.User;
 import com.todo.todoapp.UserRepository;
+import com.todo.todoapp.exception.UsernameAlreadyExistsException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +19,9 @@ public class UserService {
     }
 
     public User createUser(User user) {
+        if(userRepository.existsByUsername(user.getUsername())) {
+            throw new UsernameAlreadyExistsException(user.getUsername());
+        }
         return userRepository.save(user);
     }
 }

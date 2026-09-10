@@ -23,4 +23,10 @@ public class GlobalExceptionHandler {
     public Map<String, String> handleTodoNotFound(TodoNotFoundException ex) {
         return Map.of("error", ex.getMessage());
     }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, String> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
+        return Map.of("error", ex.getMessage());
+    }
 }
