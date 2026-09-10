@@ -1,5 +1,6 @@
 package com.todo.todoapp;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.util.List;
 import jakarta.validation.constraints.NotBlank;
@@ -22,7 +23,7 @@ public class User {
     @NotBlank(message = "Hasło nie może być puste")
     @Size(min = 6, message = "Hasło musi mieć co najmniej 6 znaków")
     @Column(nullable = false)
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @OneToMany(mappedBy = "user")
