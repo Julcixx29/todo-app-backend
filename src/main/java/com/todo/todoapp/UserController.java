@@ -1,6 +1,8 @@
 package com.todo.todoapp;
 
 
+import com.todo.todoapp.dto.LoginRequest;
+import com.todo.todoapp.dto.LoginResponse;
 import com.todo.todoapp.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -25,5 +27,10 @@ public class UserController {
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
         return userService.createUser(user);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return userService.login(request);
     }
 }

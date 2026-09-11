@@ -1,13 +1,15 @@
 package com.todo.todoapp.service;
-
+import com.todo.todoapp.dto.LoginRequest;
+import com.todo.todoapp.dto.LoginResponse;
 import com.todo.todoapp.User;
 import com.todo.todoapp.UserRepository;
+import com.todo.todoapp.exception.InvalidCredentialsException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 import com.todo.todoapp.exception.UsernameAlreadyExistsException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +20,9 @@ import static org.mockito.Mockito.*;
 public class UserServiveTest {
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -47,13 +52,17 @@ public class UserServiveTest {
         user.setUsername("testuser");
         user.setPassword("test123");
 
+        when(passwordEncoder.encode("test123"))
+                .thenReturn("zahaszowaneHaslo");
+
         when(userRepository.save(user)).thenReturn(user);
 
         User result = userService.createUser(user);
 
         assertEquals("testuser", result.getUsername());
-        assertEquals("test123", result.getPassword());
+        assertEquals("zahaszowaneHaslo", result.getPassword());
 
+        verify(passwordEncoder).encode("test123");
         verify(userRepository).save(user);
     }
 
@@ -72,5 +81,50 @@ public class UserServiveTest {
 
         verify(userRepository).existsByUsername("julia");
         verify(userRepository, never()).save(user);
+    }
+
+    @Test
+    void shouldLoginUser() {
+        User user = new User();
+        user.setUsername("julia");
+        user.setPassword("zahaszowaneHaslo");
+
+        LoginRequest request = new LoginRequest();
+        request.setUsername("julia");
+        request.setPassword("test123");
+
+        when(userRepository.findByUsername("julia"))
+                .thenReturn(java.util.Optional.of(user));
+
+        when(passwordEncoder.matches("test123", "zahaszowaneHaslo"))
+                .thenReturn(true);
+
+        LoginResponse result = userService.login(request);
+
+        assertEquals("julia", result.getUsername());
+
+        verify(passwordEncoder).matches("test123", "zahaszowaneHaslo");
+    }
+
+    @Test
+    void shouldRejectInvalidPassword() {
+        User user = new User();
+        user.setUsername("julia");
+        user.setPassword("zahaszowaneHaslo");
+
+        LoginRequest request = new LoginRequest();
+        request.setUsername("julia");
+        request.setPassword("zlehaslo");
+
+        when(userRepository.findByUsername("julia"))
+                .thenReturn(java.util.Optional.of(user));
+
+        when(passwordEncoder.matches("zlehaslo", "zahaszowaneHaslo"))
+                .thenReturn(false);
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> userService.login(request)
+        );
     }
 }
