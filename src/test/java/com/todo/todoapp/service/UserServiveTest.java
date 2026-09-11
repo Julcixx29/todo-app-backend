@@ -24,6 +24,9 @@ public class UserServiveTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private UserService userService;
 
@@ -99,9 +102,13 @@ public class UserServiveTest {
         when(passwordEncoder.matches("test123", "zahaszowaneHaslo"))
                 .thenReturn(true);
 
+        when(jwtService.generateToken(null, "julia"))
+                .thenReturn("testowy-token");
+
         LoginResponse result = userService.login(request);
 
         assertEquals("julia", result.getUsername());
+        assertEquals("testowy-token", result.getToken());
 
         verify(passwordEncoder).matches("test123", "zahaszowaneHaslo");
     }

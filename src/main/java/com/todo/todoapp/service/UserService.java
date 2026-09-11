@@ -15,10 +15,12 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public List<User> getAllUsers() {
@@ -42,6 +44,15 @@ public class UserService {
             throw new InvalidCredentialsException();
         }
 
-        return new LoginResponse(user.getId(), user.getUsername());
+        String token = jwtService.generateToken(
+                user.getId(),
+                user.getUsername()
+        );
+
+        return new LoginResponse(
+                user.getId(),
+                user.getUsername(),
+                token
+        );
     }
 }
