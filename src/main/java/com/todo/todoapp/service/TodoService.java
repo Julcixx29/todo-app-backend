@@ -5,6 +5,7 @@ import com.todo.todoapp.dto.UpdateTodoRequest;
 import com.todo.todoapp.exception.UserNotFoundException;
 import com.todo.todoapp.exception.TodoNotFoundException;
 import com.todo.todoapp.*;
+import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,8 +31,11 @@ public class TodoService {
                 .toList();
     }
 
-    public List<TodoResponseDto> getTodosByUser(Long userId) {
-        return todoRepository.findByUserId(userId)
+    public List<TodoResponseDto> getTodosByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnieje"));
+
+        return todoRepository.findByUserId(user.getId())
                 .stream()
                 .map(this::mapToDto)
                 .toList();
@@ -39,6 +43,19 @@ public class TodoService {
 
     public TodoResponseDto createTodo(Long userId, CreateTodoRequest request) {
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+
+        Todo todo = new Todo();
+        todo.setTitle(request.getTitle());
+        todo.setDueDate(request.getDueDate());
+        todo.setUser(user);
+
+        Todo saved = todoRepository.save(todo);
+        return mapToDto(saved);
+    }
+
+    public TodoResponseDto createTodo(String username, CreateTodoRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnieje"));
 
         Todo todo = new Todo();
         todo.setTitle(request.getTitle());
@@ -91,9 +108,29 @@ public class TodoService {
                 .toList();
     }
 
+    public List<TodoResponseDto> getCompletedTodosByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
+
+        return todoRepository.findByUserIdAndCompleted(user.getId(), true)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
     public List<TodoResponseDto> getPendingTodos(Long userId) {
        return todoRepository.findByUserIdAndCompleted(userId, false)
                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public List<TodoResponseDto> getPendingTodosByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
+
+        return todoRepository.findByUserIdAndCompleted(user.getId(), false)
+                .stream()
                 .map(this::mapToDto)
                 .toList();
     }
@@ -105,8 +142,28 @@ public class TodoService {
                 .toList();
     }
 
+    public List<TodoResponseDto> getTodosSortedByDueDateByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
+
+        return todoRepository.findByUserIdOrderByDueDateAsc(user.getId())
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
     public List<TodoResponseDto> searchTodos(Long userId, String title) {
         return todoRepository.findByUserIdAndTitleContainingIgnoreCase(userId, title)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public List<TodoResponseDto> searchTodosByUsername(String username, String title) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
+
+        return todoRepository.findByUserIdAndTitleContainingIgnoreCase(user.getId(), title)
                 .stream()
                 .map(this::mapToDto)
                 .toList();
@@ -120,6 +177,20 @@ public class TodoService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         return todoRepository.findByUserId(userId, pageable)
+                .map(this::mapToDto);
+    }
+
+    public Page<TodoResponseDto> getTodosPageByUsername(String username, int page, int size, String sortBy, String direction) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
+
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return todoRepository.findByUserId(user.getId(), pageable)
                 .map(this::mapToDto);
     }
 }

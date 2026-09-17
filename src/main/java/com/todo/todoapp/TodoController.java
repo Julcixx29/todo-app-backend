@@ -4,6 +4,7 @@ import com.todo.todoapp.dto.TodoResponseDto;
 import com.todo.todoapp.dto.UpdateTodoRequest;
 import com.todo.todoapp.service.TodoService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,14 +25,14 @@ public class TodoController {
         return todoService.getAllTodos();
     }
 
-    @GetMapping("/user/{userId}")
-    public List<TodoResponseDto> getTodosByUser(@PathVariable Long userId) {
-        return todoService.getTodosByUser(userId);
+    @GetMapping("/user")
+    public List<TodoResponseDto> getTodosByUser(Authentication authentication) {
+        return todoService.getTodosByUsername(authentication.getName());
     }
 
-    @PostMapping("/user/{userId}")
-    public TodoResponseDto createTodo(@PathVariable Long userId, @Valid @RequestBody CreateTodoRequest request) {
-        return todoService.createTodo(userId, request);
+    @PostMapping("/user")
+    public TodoResponseDto createTodo(Authentication authentication, @Valid @RequestBody CreateTodoRequest request) {
+        return todoService.createTodo(authentication.getName(), request);
     }
 
     @DeleteMapping("/{id}")
@@ -49,34 +50,34 @@ public class TodoController {
         return todoService.markAsCompleted(id);
     }
 
-    @GetMapping("/user/{userId}/completed")
-    public List<TodoResponseDto> getCompletedTodos(@PathVariable Long userId) {
-        return todoService.getCompletedTodos(userId);
+    @GetMapping("/user/completed")
+    public List<TodoResponseDto> getCompletedTodos(Authentication authentication) {
+        return todoService.getCompletedTodosByUsername(authentication.getName());
     }
 
-    @GetMapping("/user/{userId}/pending")
-    public List<TodoResponseDto> getPendingTodos(@PathVariable Long userId) {
-        return todoService.getPendingTodos(userId);
+    @GetMapping("/user/pending")
+    public List<TodoResponseDto> getPendingTodos(Authentication authentication) {
+        return todoService.getPendingTodosByUsername(authentication.getName());
     }
 
-    @GetMapping("/user/{userId}/sorted")
-    public List<TodoResponseDto> getSortedTodos(@PathVariable Long userId) {
-        return todoService.getTodosSortedByDueDate(userId);
+    @GetMapping("/user/sorted")
+    public List<TodoResponseDto> getSortedTodos(Authentication authentication) {
+        return todoService.getTodosSortedByDueDateByUsername(authentication.getName());
     }
 
-    @GetMapping("/user/{userId}/search")
-    public List<TodoResponseDto> searchTodos(@PathVariable Long userId, @RequestParam String title) {
-        return todoService.searchTodos(userId, title);
+    @GetMapping("/user/search")
+    public List<TodoResponseDto> searchTodos(Authentication authentication, @RequestParam String title) {
+        return todoService.searchTodosByUsername(authentication.getName(), title);
     }
 
-    @GetMapping("/user/{userId}/page")
+    @GetMapping("/user/page")
     public Page<TodoResponseDto> getTodosPage(
-            @PathVariable Long userId,
+            Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "dueDate") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
 
-        return todoService.getTodosPage(userId, page, size, sortBy, direction);
+        return todoService.getTodosPageByUsername(authentication.getName(), page, size, sortBy, direction);
     }
 }
