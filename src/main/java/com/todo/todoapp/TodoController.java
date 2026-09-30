@@ -36,18 +36,24 @@ public class TodoController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTodo(@PathVariable Long id) {
-        todoService.deleteTodo(id);
+    public void deleteTodo(@PathVariable Long id, Authentication authentication) {
+        todoService.deleteTodo(id, authentication.getName());
     }
 
     @PutMapping("/{id}")
-    public TodoResponseDto updateTodo(@PathVariable Long id, @Valid @RequestBody UpdateTodoRequest request) {
-        return todoService.updateTodo(id, request);
+    public TodoResponseDto updateTodo(@PathVariable Long id, Authentication authentication, @Valid @RequestBody UpdateTodoRequest request) {
+        return todoService.updateTodo(
+                id,
+                authentication.getName(),
+                request);
     }
 
     @PatchMapping("/{id}/complete")
-    public TodoResponseDto markAsCompleted(@PathVariable Long id) {
-        return todoService.markAsCompleted(id);
+    public TodoResponseDto markAsCompleted(@PathVariable Long id, Authentication authentication) {
+        return todoService.markAsCompleted(
+                id,
+                authentication.getName()
+        );
     }
 
     @GetMapping("/user/completed")

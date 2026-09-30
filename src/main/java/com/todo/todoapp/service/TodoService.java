@@ -5,6 +5,7 @@ import com.todo.todoapp.dto.UpdateTodoRequest;
 import com.todo.todoapp.exception.UserNotFoundException;
 import com.todo.todoapp.exception.TodoNotFoundException;
 import com.todo.todoapp.*;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +27,13 @@ public class TodoService {
 
     public List<TodoResponseDto> getAllTodos() {
         return todoRepository.findAll()
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public List<TodoResponseDto> getTodosByUser(Long userId) {
+        return todoRepository.findByUserId(userId)
                 .stream()
                 .map(this::mapToDto)
                 .toList();
@@ -74,11 +82,35 @@ public class TodoService {
         return mapToDto(saved);
     }
 
+    public TodoResponseDto markAsCompleted(Long id, String username) {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new TodoNotFoundException(id));
+
+        if(!todo.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Brak dostępu do tego zadania");
+        }
+
+        todo.setCompleted(true);
+        Todo saved = todoRepository.save(todo);
+        return mapToDto(saved);
+    }
+
     public void deleteTodo(Long id) {
         if (!todoRepository.existsById(id)) {
             throw new TodoNotFoundException(id);
         }
         todoRepository.deleteById(id);
+    }
+
+    public void deleteTodo(Long id, String username) {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new TodoNotFoundException(id));
+
+        if(!todo.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Brak dostępu do tego zadania");
+        }
+
+        todoRepository.delete(todo);
     }
 
     private TodoResponseDto mapToDto(Todo todo) {
@@ -93,6 +125,21 @@ public class TodoService {
 
     public TodoResponseDto updateTodo(Long id, UpdateTodoRequest request) {
         Todo todo = todoRepository.findById(id).orElseThrow(() -> new TodoNotFoundException(id));
+
+        todo.setTitle(request.getTitle());
+        todo.setDueDate(request.getDueDate());
+
+        Todo saved = todoRepository.save(todo);
+        return mapToDto(saved);
+    }
+
+    public TodoResponseDto updateTodo(Long id, String username, UpdateTodoRequest request) {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new TodoNotFoundException(id));
+
+        if(!todo.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Brak dostępu do tego zadania");
+        }
 
         todo.setTitle(request.getTitle());
         todo.setDueDate(request.getDueDate());
