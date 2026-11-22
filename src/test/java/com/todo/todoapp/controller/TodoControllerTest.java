@@ -3,34 +3,40 @@ package com.todo.todoapp.controller;
 import com.todo.todoapp.TodoController;
 import com.todo.todoapp.dto.TodoResponseDto;
 import com.todo.todoapp.dto.UpdateTodoRequest;
+import com.todo.todoapp.dto.CreateTodoRequest;
 import com.todo.todoapp.service.TodoService;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import com.todo.todoapp.dto.CreateTodoRequest;
-import com.todo.todoapp.dto.UpdateTodoRequest;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import java.time.LocalDateTime;
-import java.util.List;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TodoController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class TodoControllerTest {
 
     @Autowired
@@ -39,11 +45,16 @@ class TodoControllerTest {
     @MockitoBean
     private TodoService todoService;
 
+    private Authentication authentication() {
+        return new UsernamePasswordAuthenticationToken(
+                "julcix",
+                null,
+                List.of()
+        );
+    }
+
     @Test
     void shouldGetTodosByUser() throws Exception {
-
-        Long userId = 1L;
-
         TodoResponseDto todo = new TodoResponseDto(
                 1L,
                 "Nauczyć się Spring Boot",
@@ -52,10 +63,11 @@ class TodoControllerTest {
                 "julcix"
         );
 
-        when(todoService.getTodosByUser(userId))
+        when(todoService.getTodosByUsername("julcix"))
                 .thenReturn(List.of(todo));
 
-        mockMvc.perform(get("/todos/user/1"))
+        mockMvc.perform(get("/todos/user")
+                        .principal(authentication()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].id").value(1))
@@ -66,9 +78,6 @@ class TodoControllerTest {
 
     @Test
     void shouldCreateTodo() throws Exception {
-
-        Long userId = 1L;
-
         TodoResponseDto response = new TodoResponseDto(
                 1L,
                 "Nauczyć się Spring Boot",
@@ -77,10 +86,11 @@ class TodoControllerTest {
                 "julcix"
         );
 
-        when(todoService.createTodo(eq(userId), any(CreateTodoRequest.class)))
+        when(todoService.createTodo(eq("julcix"), any(CreateTodoRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/todos/user/1")
+        mockMvc.perform(post("/todos/user")
+                        .principal(authentication())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -99,7 +109,8 @@ class TodoControllerTest {
     @Test
     void shouldRejectTodoWithoutTitle() throws Exception {
 
-        mockMvc.perform(post("/todos/user/1")
+        mockMvc.perform(post("/todos/user")
+                        .principal(authentication())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -123,10 +134,11 @@ class TodoControllerTest {
                 "julcix"
         );
 
-        when(todoService.updateTodo(eq(todoId), any(UpdateTodoRequest.class)))
+        when(todoService.updateTodo(eq(todoId), eq("julcix"), any(UpdateTodoRequest.class)))
                 .thenReturn(response);
 
         mockMvc.perform(put("/todos/1")
+                        .principal(authentication())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -155,10 +167,11 @@ class TodoControllerTest {
                 "julcix"
         );
 
-        when(todoService.markAsCompleted(todoId))
+        when(todoService.markAsCompleted(todoId, "julcix"))
                 .thenReturn(response);
 
-        mockMvc.perform(patch("/todos/1/complete"))
+        mockMvc.perform(patch("/todos/1/complete")
+                        .principal(authentication()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(1))
@@ -170,15 +183,13 @@ class TodoControllerTest {
     @Test
     void shouldDeleteTodo() throws Exception {
 
-        mockMvc.perform(delete("/todos/1"))
+        mockMvc.perform(delete("/todos/1")
+                        .principal(authentication()))
                 .andExpect(status().isOk());
     }
 
     @Test
     void shouldGetCompletedTodos() throws Exception {
-
-        Long userId = 1L;
-
         TodoResponseDto todo = new TodoResponseDto(
                 1L,
                 "Zrobione zadanie",
@@ -187,10 +198,11 @@ class TodoControllerTest {
                 "julcix"
         );
 
-        when(todoService.getCompletedTodos(userId))
+        when(todoService.getCompletedTodosByUsername("julcix"))
                 .thenReturn(List.of(todo));
 
-        mockMvc.perform(get("/todos/user/1/completed"))
+        mockMvc.perform(get("/todos/user/completed")
+                        .principal(authentication()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].id").value(1))
@@ -201,9 +213,6 @@ class TodoControllerTest {
 
     @Test
     void shouldGetPendingTodos() throws Exception {
-
-        Long userId = 1L;
-
         TodoResponseDto todo = new TodoResponseDto(
                 2L,
                 "Zadanie do zrobienia",
@@ -212,10 +221,11 @@ class TodoControllerTest {
                 "julcix"
         );
 
-        when(todoService.getPendingTodos(userId))
+        when(todoService.getPendingTodosByUsername("julcix"))
                 .thenReturn(List.of(todo));
 
-        mockMvc.perform(get("/todos/user/1/pending"))
+        mockMvc.perform(get("/todos/user/pending")
+                        .principal(authentication()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].id").value(2))
@@ -226,9 +236,6 @@ class TodoControllerTest {
 
     @Test
     void shouldGetSortedTodos() throws Exception {
-
-        Long userId = 1L;
-
         TodoResponseDto todo = new TodoResponseDto(
                 1L,
                 "Najbliższe zadanie",
@@ -237,10 +244,11 @@ class TodoControllerTest {
                 "julcix"
         );
 
-        when(todoService.getTodosSortedByDueDate(userId))
+        when(todoService.getTodosSortedByDueDateByUsername("julcix"))
                 .thenReturn(List.of(todo));
 
-        mockMvc.perform(get("/todos/user/1/sorted"))
+        mockMvc.perform(get("/todos/user/sorted")
+                        .principal(authentication()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].id").value(1))
@@ -251,9 +259,6 @@ class TodoControllerTest {
 
     @Test
     void shouldSearchTodos() throws Exception {
-
-        Long userId = 1L;
-
         TodoResponseDto todo = new TodoResponseDto(
                 1L,
                 "Projekt Spring Boot",
@@ -262,10 +267,11 @@ class TodoControllerTest {
                 "julcix"
         );
 
-        when(todoService.searchTodos(userId, "projekt"))
+        when(todoService.searchTodosByUsername("julcix", "projekt"))
                 .thenReturn(List.of(todo));
 
-        mockMvc.perform(get("/todos/user/1/search")
+        mockMvc.perform(get("/todos/user/search")
+                        .principal(authentication())
                         .param("title", "projekt"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -290,15 +296,16 @@ class TodoControllerTest {
                 List.of(todo)
         );
 
-        when(todoService.getTodosPage(
-                eq(1L),
+        when(todoService.getTodosPageByUsername(
+                eq("julcix"),
                 eq(0),
                 eq(5),
                 eq("dueDate"),
                 eq("asc")
         )).thenReturn(page);
 
-        mockMvc.perform(get("/todos/user/1/page")
+        mockMvc.perform(get("/todos/user/page")
+                        .principal(authentication())
                         .param("page", "0")
                         .param("size", "5")
                         .param("sortBy", "dueDate")
