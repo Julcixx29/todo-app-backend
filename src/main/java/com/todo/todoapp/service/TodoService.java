@@ -55,6 +55,7 @@ public class TodoService {
         todo.setTitle(request.getTitle());
         todo.setDueDate(request.getDueDate());
         todo.setUser(user);
+        todo.setPriority(request.getPriority() != null ? request.getPriority() : 1);
 
         Todo saved = todoRepository.save(todo);
         return mapToDto(saved);
@@ -68,7 +69,7 @@ public class TodoService {
             throw new RuntimeException("Brak dostępu do tego zadania");
         }
 
-        todo.setCompleted(true);
+        todo.setCompleted(!Boolean.TRUE.equals(todo.getCompleted()));
         Todo saved = todoRepository.save(todo);
         return mapToDto(saved);
     }
@@ -94,6 +95,9 @@ public class TodoService {
 
         todo.setTitle(request.getTitle());
         todo.setDueDate(request.getDueDate());
+        if (request.getPriority() != null) {
+            todo.setPriority(request.getPriority());
+        }
 
         Todo saved = todoRepository.save(todo);
         return mapToDto(saved);
@@ -154,7 +158,8 @@ public class TodoService {
                 todo.getTitle(),
                 todo.getCompleted(),
                 todo.getDueDate(),
-                todo.getUser().getUsername()
+                todo.getUser().getUsername(),
+                todo.getPriority() != null ? todo.getPriority() : 1
         );
     }
 }

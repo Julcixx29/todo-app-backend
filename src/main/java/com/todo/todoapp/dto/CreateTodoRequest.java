@@ -28,4 +28,14 @@ public class CreateTodoRequest {
     public void setDueDate(LocalDateTime dueDate) {
         this.dueDate = dueDate;
     }
+
+    private Integer priority = 1;
+
+    public Integer getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Integer priority) {
+        this.priority = priority;
+    }
 }

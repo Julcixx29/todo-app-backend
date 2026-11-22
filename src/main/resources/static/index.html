@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy To-Do Nook ☕</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --teal: #335c67;
+            --cream: #fff3b0;
+            --honey: #e09f3e;
+            --rust: #9e2a2b;
+            --mahogany: #540b0e;
+            --bg-warm: #fbf6ee;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-warm);
+            background-image: radial-gradient(#e09f3e22 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            color: var(--mahogany);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 30px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .cozy-header {
+            text-align: center;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .floating-coffee {
+            display: inline-block;
+            font-size: 38px;
+            animation: cozyBob 3.5s ease-in-out infinite;
+            filter: drop-shadow(0 4px 6px rgba(84, 11, 14, 0.15));
+        }
+
+        @keyframes cozyBob {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-7px) rotate(2deg); }
+        }
+
+        h1 {
+            font-family: 'Caveat', cursive;
+            font-size: 46px;
+            color: var(--mahogany);
+            font-weight: 700;
+        }
+
+        .user-welcome {
+            font-size: 14px;
+            color: var(--teal);
+            font-weight: 700;
+            margin-top: 4px;
+            background: #fff;
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 8px rgba(84, 11, 14, 0.05);
+            border: 1.5px dashed var(--honey);
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 26px;
+            border: 2px solid var(--cream);
+            box-shadow: 0 12px 30px -8px rgba(84, 11, 14, 0.07);
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-1deg);
+            width: 110px;
+            height: 24px;
+            background: rgba(224, 159, 62, 0.45);
+            border-radius: 3px;
+        }
+
+        .input-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--teal);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input:not([type="checkbox"]), select {
+            width: 100%;
+            height: 48px;
+            padding: 0 16px;
+            border: 2px solid #f0e6d6;
+            background: #fdfcf9;
+            border-radius: 16px !important;
+            font-size: 15px;
+            color: var(--mahogany);
+            font-weight: 600;
+            outline: none;
+            transition: all 0.25s ease;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        input:not([type="checkbox"]):focus, select:focus {
+            border-color: var(--honey);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(224, 159, 62, 0.15);
+        }
+
+        .time-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 48px;
+        }
+
+        .time-select {
+            flex: 1;
+            height: 48px;
+            padding: 0 12px;
+            text-align: center;
+            text-align-last: center;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 16px !important;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: #fdfcf9;
+        }
+
+        .time-colon {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--teal);
+        }
+
+        .no-date-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            cursor: pointer;
+            user-select: none;
+            width: fit-content;
+        }
+
+        .no-date-container input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--teal);
+            border-radius: 6px !important;
+            background: #ffffff;
+            cursor: pointer;
+            display: grid;
+            place-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            margin: 0;
+            padding: 0;
+        }
+
+        .no-date-container input[type="checkbox"]:checked {
+            background: var(--teal);
+            border-color: var(--teal);
+        }
+
+        .no-date-container input[type="checkbox"]:checked::before {
+            content: "✔";
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .no-date-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--teal);
+            cursor: pointer;
+            text-transform: none;
+            letter-spacing: 0;
+            margin-bottom: 0;
+        }
+
+        .date-section.disabled {
+            opacity: 0.35;
+            pointer-events: none;
+            filter: grayscale(0.5);
+        }
+
+        .btn {
+            background: var(--teal);
+            color: #ffffff;
+            border: none;
+            height: 48px;
+            padding: 0 20px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(51, 92, 103, 0.25);
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #25454d;
+            transform: translateY(-2px);
+        }
+
+        .btn-honey {
+            background: var(--honey);
+            color: var(--mahogany);
+            box-shadow: 0 4px 12px rgba(224, 159, 62, 0.3);
+        }
+        .btn-honey:hover {
+            background: #d49332;
+        }
+
+        .btn-small {
+            width: auto;
+            height: auto;
+            padding: 4px 12px;
+            font-size: 12px;
+            border-radius: 12px;
+            background: #fff;
+            color: var(--rust);
+            border: 1.5px solid var(--rust);
+            box-shadow: none;
+        }
+        .btn-small:hover {
+            background: var(--rust);
+            color: #fff;
+        }
+
+        .priority-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fbf6ee;
+            padding: 10px 16px;
+            border-radius: 16px;
+            border: 2px solid #f0e6d6;
+            height: 48px;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 6px;
+        }
+
+        .star-item {
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0.35;
+            transition: transform 0.2s, opacity 0.2s;
+            user-select: none;
+        }
+
+        .star-item.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .star-item:hover {
+            transform: scale(1.25);
+        }
+
+        .priority-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--mahogany);
+        }
+
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: #ffffff;
+            padding: 5px;
+            border-radius: 18px;
+            border: 1.5px solid #f0e6d6;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--teal);
+            cursor: pointer;
+            padding: 7px 14px;
+            border-radius: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--cream);
+            color: var(--mahogany);
+        }
+
+        .sort-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--teal);
+        }
+
+        .sort-select {
+            width: auto;
+            height: 42px;
+            padding: 0 14px;
+            border-radius: 14px !important;
+            border: 1.5px solid #f0e6d6;
+            background: #fff;
+            color: var(--mahogany);
+            font-weight: 700;
+            outline: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .todo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 22px;
+        }
+
+        .sticky-note {
+            background: var(--cream);
+            border-radius: 6px 6px 20px 6px;
+            padding: 24px 18px 16px 18px;
+            box-shadow: 0 8px 18px -4px rgba(84, 11, 14, 0.12);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 170px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-bottom: 3px solid rgba(84, 11, 14, 0.08);
+        }
+
+        .sticky-note:nth-child(even) { transform: rotate(1deg); }
+        .sticky-note:nth-child(odd) { transform: rotate(-1.5deg); }
+        .sticky-note:nth-child(3n) { transform: rotate(1.8deg); }
+
+        .sticky-note:hover {
+            transform: rotate(0deg) translateY(-6px) scale(1.02);
+            box-shadow: 0 16px 28px -6px rgba(84, 11, 14, 0.18);
+            z-index: 10;
+        }
+
+        .sticky-note::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-1deg);
+            width: 70px;
+            height: 18px;
+            background: rgba(51, 92, 103, 0.25);
+            border-radius: 2px;
+        }
+
+        .sticky-note.priority-3 {
+            background: #ffeedb;
+            border: 2px solid var(--rust);
+            box-shadow: 0 8px 20px -2px rgba(158, 42, 43, 0.25);
+        }
+
+        .sticky-note.priority-3::after {
+            background: rgba(158, 42, 43, 0.55);
+            width: 85px;
+            transform: translateX(-50%) rotate(2deg);
+        }
+
+        .urgent-ribbon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--rust);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 8px;
+        }
+
+        .note-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .cozy-checkbox {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--teal);
+            border-radius: 7px;
+            background: #ffffff;
+            cursor: pointer;
+            display: grid;
+            place-content: center;
+            flex-shrink: 0;
+            margin-top: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .cozy-checkbox:checked {
+            background: var(--teal);
+            border-color: var(--teal);
+        }
+
+        .cozy-checkbox:checked::before {
+            content: "✔";
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .note-title {
+            font-family: 'Caveat', cursive;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--mahogany);
+            line-height: 1.25;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        .sticky-note.completed {
+            background: #f1ebd9 !important;
+            border-color: #e2dbca !important;
+            opacity: 0.82;
+        }
+
+        .sticky-note.completed .note-title {
+            text-decoration: line-through 2px var(--rust);
+            color: #8c7e72;
+        }
+
+        .done-stamp {
+            display: none;
+            font-family: 'Caveat', cursive;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--rust);
+            border: 2px dashed var(--rust);
+            padding: 2px 8px;
+            border-radius: 8px;
+            position: absolute;
+            top: 36px;
+            right: 14px;
+            transform: rotate(-10deg);
+            pointer-events: none;
+            background: #ffffff88;
+        }
+
+        .sticky-note.completed .done-stamp {
+            display: block;
+        }
+
+        .note-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 10px;
+            border-top: 1.5px dashed rgba(84, 11, 14, 0.12);
+        }
+
+        .calendar-tag {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--rust);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #ffffff99;
+            padding: 3px 8px;
+            border-radius: 8px;
+        }
+
+        .stars-display {
+            font-size: 12px;
+            margin-left: 4px;
+            letter-spacing: -2px;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 4px;
+            z-index: 5;
+        }
+
+        .btn-action {
+            background: none;
+            border: none;
+            font-size: 17px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .btn-action:hover {
+            transform: scale(1.25);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(84, 11, 14, 0.45);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 0;
+            animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.92) translateY(10px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .hidden { display: none !important; }
+
+        .alert-error {
+            background: #fee2e2;
+            color: var(--rust);
+            border: 1.5px solid var(--rust);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .empty-cozy {
+            text-align: center;
+            grid-column: 1 / -1;
+            padding: 50px 20px;
+            color: #8c7e72;
+        }
+
+        .empty-cozy-emoji {
+            font-size: 48px;
+            margin-bottom: 10px;
+            display: block;
+            animation: cozyBob 4s ease-in-out infinite;
+        }
+
+        #confettiCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<div id="editModal" class="modal-overlay hidden" onclick="closeEditModalOnBackdrop(event)">
+    <div class="card modal-card" onclick="event.stopPropagation()">
+        <h3 style="font-family: 'Caveat', cursive; font-size: 32px; color: var(--mahogany); margin-bottom: 14px;">
+            ✏️ Edytuj karteczkę
+        </h3>
+
+        <input type="hidden" id="editTodoId">
+
+        <div class="input-group">
+            <label>Treść zadania</label>
+            <input type="text" id="editTodoTitle" placeholder="Treść zadania...">
+        </div>
+
+        <div class="input-group">
+            <label class="no-date-container" style="margin-bottom: 8px;">
+                <input type="checkbox" id="editNoDateCheckbox" onchange="toggleEditNoDate(this.checked)">
+                <span class="no-date-label">Zadanie bez terminu ☕</span>
+            </label>
+
+            <div id="editDateSection" class="date-section" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px;">
+                <div>
+                    <label>Data</label>
+                    <input type="date" id="editTodoDate">
+                </div>
+                <div>
+                    <label>Godzina</label>
+                    <div class="time-picker-wrapper">
+                        <select id="editTodoHour" class="time-select"></select>
+                        <span class="time-colon">:</span>
+                        <select id="editTodoMinute" class="time-select"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Priorytet zadania</label>
+            <div class="priority-box">
+                <div class="star-rating">
+                    <span class="star-item" id="editStar1" onclick="setEditPriority(1)">⭐</span>
+                    <span class="star-item" id="editStar2" onclick="setEditPriority(2)">⭐</span>
+                    <span class="star-item" id="editStar3" onclick="setEditPriority(3)">⭐</span>
+                </div>
+                <span id="editPriorityLabel" class="priority-label"></span>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 18px;">
+            <button class="btn btn-honey" onclick="saveEditedTodo()">Zapisz zmiany ✨</button>
+            <button class="btn btn-small" style="height: 48px; padding: 0 18px; border-radius: 16px;" onclick="closeEditModal()">Anuluj</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="cozy-header">
+        <div class="floating-coffee">☕✨</div>
+        <h1>Twój Przytulny Kącik Zadań</h1>
+        <div id="userHeaderBar" class="hidden">
+            <span class="user-welcome">
+                Zalogowano: <strong id="currentUser" style="color: var(--mahogany);"></strong>
+                <button class="btn-small" onclick="logout()">Wyloguj</button>
+            </span>
+        </div>
+    </div>
+
+    <div id="authSection" class="card" style="max-width: 440px; margin: 0 auto 30px auto;">
+        <h2 id="authTitle" style="font-family: 'Caveat', cursive; font-size: 34px; color: var(--mahogany); margin-bottom: 6px;">Zaloguj się do kącika</h2>
+        <p style="color: #8c7e72; font-size: 14px; margin-bottom: 20px;">Wpisz swoje dane, aby zobaczyć swoje karteczki.</p>
+
+        <div id="authAlert" class="alert-error hidden"></div>
+
+        <div class="input-group">
+            <label>Login</label>
+            <input type="text" id="usernameInput" placeholder="Twój login">
+        </div>
+        <div class="input-group">
+            <label>Hasło</label>
+            <input type="password" id="passwordInput" placeholder="••••••••">
+        </div>
+
+        <button id="authSubmitBtn" class="btn btn-honey" onclick="handleAuthSubmit()">Wejdź do kącika ✨</button>
+
+        <div style="text-align: center; margin-top: 18px;">
+            <a href="#" id="authToggleLink" onclick="toggleAuthMode()" style="color: var(--rust); font-size: 14px; font-weight: 700; text-decoration: none;">
+                Nie masz konta? Zarejestruj się tutaj 📝
+            </a>
+        </div>
+    </div>
+
+    <div id="appSection" class="hidden">
+
+        <div class="card">
+            <h3 style="font-family: 'Caveat', cursive; font-size: 28px; color: var(--mahogany); margin-bottom: 14px;">
+                📌 Przyklej nowe zadanie
+            </h3>
+
+            <div class="input-group">
+                <label>Treść zadania</label>
+                <input type="text" id="newTodoTitle" placeholder="np. Zrobić pyszną herbatkę i dokończyć projekt...">
+            </div>
+
+            <div class="input-group">
+                <label class="no-date-container" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="newNoDateCheckbox" onchange="toggleNewNoDate(this.checked)">
+                    <span class="no-date-label">Zadanie bez terminu ☕</span>
+                </label>
+
+                <div id="newDateSection" class="date-section" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px;">
+                    <div>
+                        <label>Data</label>
+                        <input type="date" id="newTodoDate">
+                    </div>
+                    <div>
+                        <label>Godzina</label>
+                        <div class="time-picker-wrapper">
+                            <select id="newTodoHour" class="time-select"></select>
+                            <span class="time-colon">:</span>
+                            <select id="newTodoMinute" class="time-select"></select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Priorytet zadania</label>
+                <div class="priority-box">
+                    <div class="star-rating">
+                        <span class="star-item active" id="star1" onclick="setPriority(1)">⭐</span>
+                        <span class="star-item" id="star2" onclick="setPriority(2)">⭐</span>
+                        <span class="star-item" id="star3" onclick="setPriority(3)">⭐</span>
+                    </div>
+                    <span id="priorityLabel" class="priority-label">Na spokojnie ☕</span>
+                </div>
+            </div>
+
+            <button class="btn btn-honey" style="margin-top: 6px;" onclick="addTodo()">Przyklej na tablicę 📌</button>
+        </div>
+
+        <div class="controls-bar">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="setFilter('all', this)">Wszystkie 📋</button>
+                <button class="tab-btn" onclick="setFilter('pending', this)">Do zrobienia ⏳</button>
+                <button class="tab-btn" onclick="setFilter('completed', this)">Zrobione! ✨</button>
+            </div>
+
+            <div class="sort-box">
+                <span>Sortuj:</span>
+                <select id="sortSelect" class="sort-select" onchange="changeSort(this.value)">
+                    <option value="date">📅 Wg terminu</option>
+                    <option value="priority">⭐ Wg priorytetu (od pilnych)</option>
+                    <option value="newest">🕒 Najnowsze</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="todoGrid" class="todo-grid"></div>
+
+    </div>
+
+</div>
+
+<script>
+    let isRegisterMode = false;
+    let currentFilter = 'all';
+    let currentSort = 'date';
+    let selectedPriority = 1;
+    let selectedEditPriority = 1;
+    let loadedTodos = [];
+
+    function populateTimeSelects(hourSelectId, minuteSelectId, defaultHour = '18', defaultMinute = '00') {
+        const hourSel = document.getElementById(hourSelectId);
+        const minSel = document.getElementById(minuteSelectId);
+
+        hourSel.innerHTML = '';
+        for (let h = 0; h < 24; h++) {
+            const val = h.toString().padStart(2, '0');
+            hourSel.innerHTML += `<option value="${val}" ${val === defaultHour ? 'selected' : ''}>${val}</option>`;
+        }
+
+        minSel.innerHTML = '';
+        for (let m = 0; m < 60; m += 5) {
+            const val = m.toString().padStart(2, '0');
+            minSel.innerHTML += `<option value="${val}" ${val === defaultMinute ? 'selected' : ''}>${val}</option>`;
+        }
+    }
+
+    window.onload = function() {
+        populateTimeSelects('newTodoHour', 'newTodoMinute', '18', '00');
+        populateTimeSelects('editTodoHour', 'editTodoMinute', '18', '00');
+
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        if (token && username) {
+            showApp(username);
+        }
+        document.getElementById('newTodoDate').value = new Date().toISOString().split('T')[0];
+    };
+
+    function toggleNewNoDate(isNoDate) {
+        document.getElementById('newDateSection').classList.toggle('disabled', isNoDate);
+    }
+
+    function toggleEditNoDate(isNoDate) {
+        document.getElementById('editDateSection').classList.toggle('disabled', isNoDate);
+    }
+
+    function setPriority(level) {
+        selectedPriority = level;
+        document.getElementById('star1').classList.toggle('active', level >= 1);
+        document.getElementById('star2').classList.toggle('active', level >= 2);
+        document.getElementById('star3').classList.toggle('active', level >= 3);
+
+        const labels = { 1: 'Na spokojnie ☕', 2: 'Ważne 📌', 3: 'Bardzo pilne! 🔥' };
+        document.getElementById('priorityLabel').innerText = labels[level];
+    }
+
+    function setEditPriority(level) {
+        selectedEditPriority = level;
+        document.getElementById('editStar1').classList.toggle('active', level >= 1);
+        document.getElementById('editStar2').classList.toggle('active', level >= 2);
+        document.getElementById('editStar3').classList.toggle('active', level >= 3);
+
+        const labels = { 1: 'Na spokojnie ☕', 2: 'Ważne 📌', 3: 'Bardzo pilne! 🔥' };
+        document.getElementById('editPriorityLabel').innerText = labels[level];
+    }
+
+    function toggleAuthMode() {
+        isRegisterMode = !isRegisterMode;
+        document.getElementById('authAlert').classList.add('hidden');
+        document.getElementById('authTitle').innerText = isRegisterMode ? 'Dołącz do kącika 🌸' : 'Zaloguj się do kącika ☕';
+        document.getElementById('authSubmitBtn').innerText = isRegisterMode ? 'Zarejestruj się ✨' : 'Wejdź do kącika ✨';
+        document.getElementById('authToggleLink').innerText = isRegisterMode ? 'Masz już konto? Zaloguj się' : 'Nie masz konta? Zarejestruj się tutaj 📝';
+    }
+
+    async function handleAuthSubmit() {
+        const username = document.getElementById('usernameInput').value.trim();
+        const password = document.getElementById('passwordInput').value.trim();
+        const alertBox = document.getElementById('authAlert');
+
+        if (!username || !password) {
+            alertBox.innerText = 'Uzupełnij login i hasło!';
+            alertBox.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            if (isRegisterMode) {
+                const res = await fetch('/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Błąd rejestracji');
+                }
+
+                alert('Konto stworzone pomyślnie! Teraz możesz się zalogować.');
+                toggleAuthMode();
+            } else {
+                const res = await fetch('/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!res.ok) throw new Error('Niepoprawny login lub hasło!');
+
+                const data = await res.json();
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('username', data.username);
+                showApp(data.username);
+            }
+        } catch (error) {
+            alertBox.innerText = error.message;
+            alertBox.classList.remove('hidden');
+        }
+    }
+
+    function showApp(username) {
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+        document.getElementById('userHeaderBar').classList.remove('hidden');
+        document.getElementById('currentUser').innerText = username;
+        loadTodos();
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        document.getElementById('appSection').classList.add('hidden');
+        document.getElementById('userHeaderBar').classList.add('hidden');
+        document.getElementById('authSection').classList.remove('hidden');
+        document.getElementById('usernameInput').value = '';
+        document.getElementById('passwordInput').value = '';
+    }
+
+    async function loadTodos() {
+        const token = localStorage.getItem('token');
+        let url = '/todos/user';
+
+        if (currentFilter === 'completed') url = '/todos/user/completed';
+        if (currentFilter === 'pending') url = '/todos/user/pending';
+
+        try {
+            const res = await fetch(url, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                logout();
+                return;
+            }
+
+            loadedTodos = await res.json();
+            renderTodos();
+        } catch (err) {
+            console.error('Błąd pobierania zadań:', err);
+        }
+    }
+
+    function changeSort(val) {
+        currentSort = val;
+        renderTodos();
+    }
+
+    function renderTodos() {
+        const grid = document.getElementById('todoGrid');
+        let todos = [...loadedTodos];
+
+        if (!todos || todos.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-cozy">
+                    <span class="empty-cozy-emoji">🕯️📖</span>
+                    <p style="font-family: 'Caveat', cursive; font-size: 26px; color: var(--mahogany);">Twoja tablica jest pusta!</p>
+                    <p style="font-size: 14px;">Czas na odpoczynek lub przyklejenie nowego zadania powyżej.</p>
+                </div>
+            `;
+            return;
+        }
+
+        if (currentSort === 'priority') {
+            todos.sort((a, b) => (b.priority || 1) - (a.priority || 1));
+        } else if (currentSort === 'date') {
+            todos.sort((a, b) => {
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
+        } else if (currentSort === 'newest') {
+            todos.sort((a, b) => b.id - a.id);
+        }
+
+        grid.innerHTML = todos.map(todo => {
+            const prio = todo.priority || 1;
+            const stars = '⭐'.repeat(prio);
+
+            const formattedDate = todo.dueDate
+                ? '📅 ' + new Date(todo.dueDate).toLocaleString('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+                : '☕ Bez terminu';
+
+            return `
+                <div class="sticky-note priority-${prio} ${todo.completed ? 'completed' : ''}">
+                    ${prio === 3 ? '<span class="urgent-ribbon">🔥 PILNE</span>' : ''}
+
+                    <div class="note-header">
+                        <input type="checkbox" class="cozy-checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleComplete(${todo.id}, this)">
+                        <span class="note-title">${escapeHtml(todo.title)}</span>
+                    </div>
+
+                    <span class="done-stamp">Zrobione! ✨</span>
+
+                    <div class="note-footer">
+                        <span class="calendar-tag">
+                            ${formattedDate}
+                            <span class="stars-display" title="Priorytet: ${prio}">${stars}</span>
+                        </span>
+                        <div class="note-actions">
+                            <button class="btn-action" title="Edytuj zadanie" onclick="openEditModal(${todo.id})">✏️</button>
+                            <button class="btn-action" title="Odklej zadanie" onclick="deleteTodo(${todo.id})">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function addTodo() {
+        const titleInput = document.getElementById('newTodoTitle');
+        const isNoDate = document.getElementById('newNoDateCheckbox').checked;
+        const dateInput = document.getElementById('newTodoDate');
+        const hourInput = document.getElementById('newTodoHour');
+        const minuteInput = document.getElementById('newTodoMinute');
+        const title = titleInput.value.trim();
+        const token = localStorage.getItem('token');
+
+        if (!title) {
+            alert('Wpisz treść zadania na karteczce! ✨');
+            return;
+        }
+
+        let dueDate = null;
+        if (!isNoDate && dateInput.value) {
+            dueDate = `${dateInput.value}T${hourInput.value}:${minuteInput.value}:00`;
+        }
+
+        const res = await fetch('/todos/user', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                title,
+                dueDate,
+                priority: selectedPriority
+            })
+        });
+
+        if (res.ok) {
+            titleInput.value = '';
+            setPriority(1);
+            document.getElementById('newNoDateCheckbox').checked = false;
+            toggleNewNoDate(false);
+            triggerConfetti();
+            loadTodos();
+        } else {
+            alert('Coś poszło nie tak przy dodawaniu zadania!');
+        }
+    }
+
+    function openEditModal(id) {
+        const todo = loadedTodos.find(t => t.id === id);
+        if (!todo) return;
+
+        document.getElementById('editTodoId').value = todo.id;
+        document.getElementById('editTodoTitle').value = todo.title;
+
+        const isNoDate = !todo.dueDate;
+        document.getElementById('editNoDateCheckbox').checked = isNoDate;
+        toggleEditNoDate(isNoDate);
+
+        if (todo.dueDate) {
+            const d = new Date(todo.dueDate);
+            document.getElementById('editTodoDate').value = d.toISOString().split('T')[0];
+            const hh = d.getHours().toString().padStart(2, '0');
+            const mm = (Math.round(d.getMinutes() / 5) * 5 % 60).toString().padStart(2, '0');
+            populateTimeSelects('editTodoHour', 'editTodoMinute', hh, mm);
+        } else {
+            document.getElementById('editTodoDate').value = new Date().toISOString().split('T')[0];
+            populateTimeSelects('editTodoHour', 'editTodoMinute', '18', '00');
+        }
+
+        setEditPriority(todo.priority || 1);
+        document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.add('hidden');
+    }
+
+    function closeEditModalOnBackdrop(e) {
+        if (e.target.id === 'editModal') closeEditModal();
+    }
+
+    async function saveEditedTodo() {
+        const id = document.getElementById('editTodoId').value;
+        const title = document.getElementById('editTodoTitle').value.trim();
+        const isNoDate = document.getElementById('editNoDateCheckbox').checked;
+        const dateVal = document.getElementById('editTodoDate').value;
+        const hourVal = document.getElementById('editTodoHour').value;
+        const minVal = document.getElementById('editTodoMinute').value;
+        const token = localStorage.getItem('token');
+
+        if (!title) {
+            alert('Tytuł nie może być pusty!');
+            return;
+        }
+
+        let dueDate = null;
+        if (!isNoDate && dateVal) {
+            dueDate = `${dateVal}T${hourVal}:${minVal}:00`;
+        }
+
+        const res = await fetch(`/todos/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                title,
+                dueDate,
+                priority: selectedEditPriority
+            })
+        });
+
+        if (res.ok) {
+            closeEditModal();
+            loadTodos();
+        } else {
+            alert('Błąd podczas zapisywania zmian');
+        }
+    }
+
+    async function toggleComplete(id, checkbox) {
+        const token = localStorage.getItem('token');
+        if (checkbox.checked) {
+            triggerConfetti();
+        }
+        await fetch(`/todos/${id}/complete`, {
+            method: 'PATCH',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        loadTodos();
+    }
+
+    async function deleteTodo(id) {
+        if (!confirm('Czy na pewno chcesz odkleić i wyrzucić to zadanie?')) return;
+        const token = localStorage.getItem('token');
+        await fetch(`/todos/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        loadTodos();
+    }
+
+    function setFilter(filter, btn) {
+        currentFilter = filter;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadTodos();
+    }
+
+    function escapeHtml(text) {
+        return text ? text.replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m])) : '';
+    }
+
+    function triggerConfetti() {
+        const canvas = document.getElementById('confettiCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const colors = ['#e09f3e', '#fff3b0', '#9e2a2b', '#335c67', '#540b0e'];
+        const particles = [];
+
+        for (let i = 0; i < 40; i++) {
+            particles.push({
+                x: window.innerWidth / 2 + (Math.random() * 200 - 100),
+                y: window.innerHeight / 2,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 1.2) * 8,
+                size: Math.random() * 8 + 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                rotation: Math.random() * 360,
+                rotSpeed: (Math.random() - 0.5) * 10
+            });
+        }
+
+        let frame = 0;
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.25;
+                p.rotation += p.rotSpeed;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                ctx.restore();
+            });
+
+            frame++;
+            if (frame < 65) {
+                requestAnimationFrame(animate);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        animate();
+    }
+</script>
+
+</body>
+</html>

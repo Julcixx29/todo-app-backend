@@ -22,6 +22,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/favicon.ico",
                                 "/users/login",
                                 "/users",
                                 "/swagger-ui/**",
