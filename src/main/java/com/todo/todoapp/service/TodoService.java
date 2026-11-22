@@ -1,12 +1,14 @@
 package com.todo.todoapp.service;
+
+import com.todo.todoapp.Todo;
+import com.todo.todoapp.TodoRepository;
+import com.todo.todoapp.User;
+import com.todo.todoapp.UserRepository;
 import com.todo.todoapp.dto.CreateTodoRequest;
 import com.todo.todoapp.dto.TodoResponseDto;
 import com.todo.todoapp.dto.UpdateTodoRequest;
-import com.todo.todoapp.exception.UserNotFoundException;
 import com.todo.todoapp.exception.TodoNotFoundException;
-import com.todo.todoapp.*;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
-import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
+import com.todo.todoapp.exception.UserNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,11 @@ public class TodoService {
         this.userRepository = userRepository;
     }
 
+    private User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+    }
+
     public List<TodoResponseDto> getAllTodos() {
         return todoRepository.findAll()
                 .stream()
@@ -32,16 +39,8 @@ public class TodoService {
                 .toList();
     }
 
-    public List<TodoResponseDto> getTodosByUser(Long userId) {
-        return todoRepository.findByUserId(userId)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
-
     public List<TodoResponseDto> getTodosByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnieje"));
+        User user = getUserByUsername(username);
 
         return todoRepository.findByUserId(user.getId())
                 .stream()
@@ -49,35 +48,14 @@ public class TodoService {
                 .toList();
     }
 
-    public TodoResponseDto createTodo(Long userId, CreateTodoRequest request) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
-
-        Todo todo = new Todo();
-        todo.setTitle(request.getTitle());
-        todo.setDueDate(request.getDueDate());
-        todo.setUser(user);
-
-        Todo saved = todoRepository.save(todo);
-        return mapToDto(saved);
-    }
-
     public TodoResponseDto createTodo(String username, CreateTodoRequest request) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnieje"));
+        User user = getUserByUsername(username);
 
         Todo todo = new Todo();
         todo.setTitle(request.getTitle());
         todo.setDueDate(request.getDueDate());
         todo.setUser(user);
 
-        Todo saved = todoRepository.save(todo);
-        return mapToDto(saved);
-    }
-
-    public TodoResponseDto markAsCompleted(Long id) {
-        Todo todo = todoRepository.findById(id).orElseThrow(() -> new TodoNotFoundException(id));
-
-        todo.setCompleted(true);
         Todo saved = todoRepository.save(todo);
         return mapToDto(saved);
     }
@@ -86,7 +64,7 @@ public class TodoService {
         Todo todo = todoRepository.findById(id)
                 .orElseThrow(() -> new TodoNotFoundException(id));
 
-        if(!todo.getUser().getUsername().equals(username)) {
+        if (!todo.getUser().getUsername().equals(username)) {
             throw new RuntimeException("Brak dostępu do tego zadania");
         }
 
@@ -95,22 +73,79 @@ public class TodoService {
         return mapToDto(saved);
     }
 
-    public void deleteTodo(Long id) {
-        if (!todoRepository.existsById(id)) {
-            throw new TodoNotFoundException(id);
-        }
-        todoRepository.deleteById(id);
-    }
-
     public void deleteTodo(Long id, String username) {
         Todo todo = todoRepository.findById(id)
                 .orElseThrow(() -> new TodoNotFoundException(id));
 
-        if(!todo.getUser().getUsername().equals(username)) {
+        if (!todo.getUser().getUsername().equals(username)) {
             throw new RuntimeException("Brak dostępu do tego zadania");
         }
 
         todoRepository.delete(todo);
+    }
+
+    public TodoResponseDto updateTodo(Long id, String username, UpdateTodoRequest request) {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new TodoNotFoundException(id));
+
+        if (!todo.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Brak dostępu do tego zadania");
+        }
+
+        todo.setTitle(request.getTitle());
+        todo.setDueDate(request.getDueDate());
+
+        Todo saved = todoRepository.save(todo);
+        return mapToDto(saved);
+    }
+
+    public List<TodoResponseDto> getCompletedTodosByUsername(String username) {
+        User user = getUserByUsername(username);
+
+        return todoRepository.findByUserIdAndCompleted(user.getId(), true)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public List<TodoResponseDto> getPendingTodosByUsername(String username) {
+        User user = getUserByUsername(username);
+
+        return todoRepository.findByUserIdAndCompleted(user.getId(), false)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public List<TodoResponseDto> getTodosSortedByDueDateByUsername(String username) {
+        User user = getUserByUsername(username);
+
+        return todoRepository.findByUserIdOrderByDueDateAsc(user.getId())
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public List<TodoResponseDto> searchTodosByUsername(String username, String title) {
+        User user = getUserByUsername(username);
+
+        return todoRepository.findByUserIdAndTitleContainingIgnoreCase(user.getId(), title)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public Page<TodoResponseDto> getTodosPageByUsername(String username, int page, int size, String sortBy, String direction) {
+        User user = getUserByUsername(username);
+
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return todoRepository.findByUserId(user.getId(), pageable)
+                .map(this::mapToDto);
     }
 
     private TodoResponseDto mapToDto(Todo todo) {
@@ -121,123 +156,5 @@ public class TodoService {
                 todo.getDueDate(),
                 todo.getUser().getUsername()
         );
-    }
-
-    public TodoResponseDto updateTodo(Long id, UpdateTodoRequest request) {
-        Todo todo = todoRepository.findById(id).orElseThrow(() -> new TodoNotFoundException(id));
-
-        todo.setTitle(request.getTitle());
-        todo.setDueDate(request.getDueDate());
-
-        Todo saved = todoRepository.save(todo);
-        return mapToDto(saved);
-    }
-
-    public TodoResponseDto updateTodo(Long id, String username, UpdateTodoRequest request) {
-        Todo todo = todoRepository.findById(id)
-                .orElseThrow(() -> new TodoNotFoundException(id));
-
-        if(!todo.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("Brak dostępu do tego zadania");
-        }
-
-        todo.setTitle(request.getTitle());
-        todo.setDueDate(request.getDueDate());
-
-        Todo saved = todoRepository.save(todo);
-        return mapToDto(saved);
-    }
-
-    public List<TodoResponseDto> getCompletedTodos(Long userId) {
-        return todoRepository.findByUserIdAndCompleted(userId, true)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
-
-    public List<TodoResponseDto> getCompletedTodosByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
-
-        return todoRepository.findByUserIdAndCompleted(user.getId(), true)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
-
-    public List<TodoResponseDto> getPendingTodos(Long userId) {
-       return todoRepository.findByUserIdAndCompleted(userId, false)
-               .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
-
-    public List<TodoResponseDto> getPendingTodosByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
-
-        return todoRepository.findByUserIdAndCompleted(user.getId(), false)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
-
-    public List<TodoResponseDto> getTodosSortedByDueDate(Long userId) {
-        return todoRepository.findByUserIdOrderByDueDateAsc(userId)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
-
-    public List<TodoResponseDto> getTodosSortedByDueDateByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
-
-        return todoRepository.findByUserIdOrderByDueDateAsc(user.getId())
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
-
-    public List<TodoResponseDto> searchTodos(Long userId, String title) {
-        return todoRepository.findByUserIdAndTitleContainingIgnoreCase(userId, title)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
-
-    public List<TodoResponseDto> searchTodosByUsername(String username, String title) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
-
-        return todoRepository.findByUserIdAndTitleContainingIgnoreCase(user.getId(), title)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
-
-    public Page<TodoResponseDto> getTodosPage(Long userId, int page, int size, String sortBy, String direction) {
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        return todoRepository.findByUserId(userId, pageable)
-                .map(this::mapToDto);
-    }
-
-    public Page<TodoResponseDto> getTodosPageByUsername(String username, int page, int size, String sortBy, String direction) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnie"));
-
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        return todoRepository.findByUserId(user.getId(), pageable)
-                .map(this::mapToDto);
     }
 }

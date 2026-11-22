@@ -1,23 +1,35 @@
 package com.todo.todoapp.service;
+
 import com.todo.todoapp.Todo;
-import com.todo.todoapp.User;
 import com.todo.todoapp.TodoRepository;
+import com.todo.todoapp.User;
 import com.todo.todoapp.UserRepository;
 import com.todo.todoapp.dto.CreateTodoRequest;
 import com.todo.todoapp.dto.TodoResponseDto;
 import com.todo.todoapp.dto.UpdateTodoRequest;
+import com.todo.todoapp.exception.TodoNotFoundException;
+import com.todo.todoapp.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TodoServiceTest {
+
     @Mock
     private TodoRepository todoRepository;
 
@@ -28,17 +40,50 @@ public class TodoServiceTest {
     private TodoService todoService;
 
     @Test
+    void shouldGetAllTodos() {
+        User user = new User();
+        user.setUsername("julia");
+
+        Todo todo = new Todo();
+        todo.setTitle("Wszystkie zadania");
+        todo.setCompleted(false);
+        todo.setUser(user);
+
+        when(todoRepository.findAll()).thenReturn(List.of(todo));
+
+        List<TodoResponseDto> result = todoService.getAllTodos();
+
+        assertEquals(1, result.size());
+        assertEquals("Wszystkie zadania", result.get(0).getTitle());
+    }
+
+    @Test
+    void shouldGetTodosByUsername() {
+        User user = new User();
+        user.setUsername("julia");
+
+        Todo todo = new Todo();
+        todo.setTitle("Moje zadanie");
+        todo.setCompleted(false);
+        todo.setUser(user);
+
+        when(userRepository.findByUsername("julia")).thenReturn(Optional.of(user));
+        when(todoRepository.findByUserId(user.getId())).thenReturn(List.of(todo));
+
+        List<TodoResponseDto> result = todoService.getTodosByUsername("julia");
+
+        assertEquals(1, result.size());
+        assertEquals("Moje zadanie", result.get(0).getTitle());
+    }
+
+    @Test
     void shouldCreateTodo() {
-
-        // GIVEN
-        Long userId = 1L;
-
         User user = new User();
         user.setUsername("julia");
 
         CreateTodoRequest request = new CreateTodoRequest();
         request.setTitle("Próba testu");
-        request.setDueDate(LocalDateTime.of(2026, 9, 10,18, 0));
+        request.setDueDate(LocalDateTime.of(2026, 9, 10, 18, 0));
 
         Todo savedTodo = new Todo();
         savedTodo.setTitle("Próba testu");
@@ -46,47 +91,33 @@ public class TodoServiceTest {
         savedTodo.setDueDate(request.getDueDate());
         savedTodo.setUser(user);
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.findByUsername("julia")).thenReturn(Optional.of(user));
+        when(todoRepository.save(any(Todo.class))).thenReturn(savedTodo);
 
-        when(todoRepository.save(org.mockito.ArgumentMatchers.any(Todo.class)))
-                .thenReturn(savedTodo);
+        TodoResponseDto result = todoService.createTodo("julia", request);
 
-        // WHEN
-        TodoResponseDto result = todoService.createTodo(userId, request);
-
-        // THEN
         assertEquals("Próba testu", result.getTitle());
         assertEquals(false, result.getCompleted());
         assertEquals(request.getDueDate(), result.getDueDate());
         assertEquals("julia", result.getUsername());
-
     }
 
     @Test
     void shouldThrowExceptionWhenUserDoesNotExist() {
-
-        // GIVEN
-        Long userId = 999L;
-
         CreateTodoRequest request = new CreateTodoRequest();
         request.setTitle("Nauczyć się testów");
-        request.setDueDate(LocalDateTime.of(2026, 9, 10,18, 0));
+        request.setDueDate(LocalDateTime.of(2026, 9, 10, 18, 0));
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.empty());
+        when(userRepository.findByUsername("nieznany")).thenReturn(Optional.empty());
 
-        //WHEN+THEN
-        org.junit.jupiter.api.Assertions.assertThrows(
-                com.todo.todoapp.exception.UserNotFoundException.class,
-                () -> todoService.createTodo(userId, request));
-
+        assertThrows(
+                UserNotFoundException.class,
+                () -> todoService.createTodo("nieznany", request)
+        );
     }
 
     @Test
     void shouldMarkTodoAsCompleted() {
-
-        // GIVEN
         Long todoId = 1L;
 
         User user = new User();
@@ -98,73 +129,98 @@ public class TodoServiceTest {
         todo.setDueDate(LocalDateTime.of(2026, 9, 10, 18, 0));
         todo.setUser(user);
 
-        when(todoRepository.findById(todoId))
-                .thenReturn(Optional.of(todo));
+        when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
+        when(todoRepository.save(todo)).thenReturn(todo);
 
-        when(todoRepository.save(todo))
-                .thenReturn(todo);
+        TodoResponseDto result = todoService.markAsCompleted(todoId, "julia");
 
-        // WHEN
-        TodoResponseDto result = todoService.markAsCompleted(todoId);
-
-        // THEN
-        assertEquals(true, result.getCompleted());
+        assertTrue(result.getCompleted());
         assertEquals("Nauczyć się testów", result.getTitle());
     }
 
     @Test
-    void shouldThrowExceptionWhenTodoDoesNotExist() {
+    void shouldThrowExceptionWhenOtherUserTriesToMarkAsCompleted() {
+        Long todoId = 1L;
 
-        // GIVEN
+        User owner = new User();
+        owner.setUsername("julia");
+
+        Todo todo = new Todo();
+        todo.setUser(owner);
+
+        when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> todoService.markAsCompleted(todoId, "innyUzytkownik")
+        );
+
+        assertEquals("Brak dostępu do tego zadania", ex.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenTodoDoesNotExist() {
         Long todoId = 999L;
 
-        when(todoRepository.findById(todoId))
-                .thenReturn(Optional.empty());
+        when(todoRepository.findById(todoId)).thenReturn(Optional.empty());
 
-        // WHEN + THEN
-        org.junit.jupiter.api.Assertions.assertThrows(
-                com.todo.todoapp.exception.TodoNotFoundException.class,
-                () -> todoService.markAsCompleted(todoId)
+        assertThrows(
+                TodoNotFoundException.class,
+                () -> todoService.markAsCompleted(todoId, "julia")
         );
     }
 
     @Test
     void shouldDeleteTodo() {
-
-        // GIVEN
         Long todoId = 1L;
 
-        when(todoRepository.existsById(todoId))
-                .thenReturn(true);
+        User user = new User();
+        user.setUsername("julia");
 
-        // WHEN
-        todoService.deleteTodo(todoId);
+        Todo todo = new Todo();
+        todo.setUser(user);
 
-        // THEN
-        org.mockito.Mockito.verify(todoRepository)
-                .deleteById(todoId);
+        when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
+
+        todoService.deleteTodo(todoId, "julia");
+
+        verify(todoRepository).delete(todo);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOtherUserTriesToDeleteTodo() {
+        Long todoId = 1L;
+
+        User owner = new User();
+        owner.setUsername("julia");
+
+        Todo todo = new Todo();
+        todo.setUser(owner);
+
+        when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> todoService.deleteTodo(todoId, "innyUzytkownik")
+        );
+
+        assertEquals("Brak dostępu do tego zadania", ex.getMessage());
     }
 
     @Test
     void shouldThrowExceptionWhenDeletingTodoDoesNotExist() {
-
-        // GIVEN
         Long todoId = 999L;
 
-        when(todoRepository.existsById(todoId))
-                .thenReturn(false);
+        when(todoRepository.findById(todoId)).thenReturn(Optional.empty());
 
-        // WHEN + THEN
-        org.junit.jupiter.api.Assertions.assertThrows(
-                com.todo.todoapp.exception.TodoNotFoundException.class,
-                () -> todoService.deleteTodo(todoId)
+        assertThrows(
+                TodoNotFoundException.class,
+                () -> todoService.deleteTodo(todoId, "julia")
         );
     }
 
     @Test
     void shouldUpdateTodo() {
-
-        // GIVEN
         Long todoId = 1L;
 
         User user = new User();
@@ -180,49 +236,53 @@ public class TodoServiceTest {
         request.setTitle("Nowy tytuł");
         request.setDueDate(LocalDateTime.of(2026, 9, 15, 20, 0));
 
-        when(todoRepository.findById(todoId))
-                .thenReturn(Optional.of(todo));
+        when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
+        when(todoRepository.save(todo)).thenReturn(todo);
 
-        when(todoRepository.save(todo))
-                .thenReturn(todo);
+        TodoResponseDto result = todoService.updateTodo(todoId, "julia", request);
 
-        // WHEN
-        TodoResponseDto result = todoService.updateTodo(todoId, request);
-
-        // THEN
         assertEquals("Nowy tytuł", result.getTitle());
-        assertEquals(
-                LocalDateTime.of(2026, 9, 15, 20, 0),
-                result.getDueDate()
+        assertEquals(LocalDateTime.of(2026, 9, 15, 20, 0), result.getDueDate());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOtherUserTriesToUpdateTodo() {
+        Long todoId = 1L;
+
+        User owner = new User();
+        owner.setUsername("julia");
+
+        Todo todo = new Todo();
+        todo.setUser(owner);
+
+        UpdateTodoRequest request = new UpdateTodoRequest();
+
+        when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> todoService.updateTodo(todoId, "innyUzytkownik", request)
         );
+
+        assertEquals("Brak dostępu do tego zadania", ex.getMessage());
     }
 
     @Test
     void shouldThrowExceptionWhenUpdatingTodoDoesNotExist() {
-
-        // GIVEN
         Long todoId = 999L;
 
         UpdateTodoRequest request = new UpdateTodoRequest();
-        request.setTitle("Nowy tytuł");
-        request.setDueDate(LocalDateTime.of(2026, 9, 15, 20, 0));
 
-        when(todoRepository.findById(todoId))
-                .thenReturn(Optional.empty());
+        when(todoRepository.findById(todoId)).thenReturn(Optional.empty());
 
-        // WHEN + THEN
-        org.junit.jupiter.api.Assertions.assertThrows(
-                com.todo.todoapp.exception.TodoNotFoundException.class,
-                () -> todoService.updateTodo(todoId, request)
+        assertThrows(
+                TodoNotFoundException.class,
+                () -> todoService.updateTodo(todoId, "julia", request)
         );
     }
 
     @Test
     void shouldGetCompletedTodos() {
-
-        // GIVEN
-        Long userId = 1L;
-
         User user = new User();
         user.setUsername("julia");
 
@@ -231,25 +291,18 @@ public class TodoServiceTest {
         completedTodo.setCompleted(true);
         completedTodo.setUser(user);
 
-        when(todoRepository.findByUserIdAndCompleted(userId, true))
-                .thenReturn(java.util.List.of(completedTodo));
+        when(userRepository.findByUsername("julia")).thenReturn(Optional.of(user));
+        when(todoRepository.findByUserIdAndCompleted(user.getId(), true)).thenReturn(List.of(completedTodo));
 
-        // WHEN
-        java.util.List<TodoResponseDto> result =
-                todoService.getCompletedTodos(userId);
+        List<TodoResponseDto> result = todoService.getCompletedTodosByUsername("julia");
 
-        // THEN
         assertEquals(1, result.size());
         assertEquals("Ukończone zadanie", result.get(0).getTitle());
-        assertEquals(true, result.get(0).getCompleted());
+        assertTrue(result.get(0).getCompleted());
     }
 
     @Test
     void shouldGetPendingTodos() {
-
-        // GIVEN
-        Long userId = 1L;
-
         User user = new User();
         user.setUsername("julia");
 
@@ -258,25 +311,18 @@ public class TodoServiceTest {
         pendingTodo.setCompleted(false);
         pendingTodo.setUser(user);
 
-        when(todoRepository.findByUserIdAndCompleted(userId, false))
-                .thenReturn(java.util.List.of(pendingTodo));
+        when(userRepository.findByUsername("julia")).thenReturn(Optional.of(user));
+        when(todoRepository.findByUserIdAndCompleted(user.getId(), false)).thenReturn(List.of(pendingTodo));
 
-        // WHEN
-        java.util.List<TodoResponseDto> result =
-                todoService.getPendingTodos(userId);
+        List<TodoResponseDto> result = todoService.getPendingTodosByUsername("julia");
 
-        // THEN
         assertEquals(1, result.size());
         assertEquals("Zadanie do zrobienia", result.get(0).getTitle());
-        assertEquals(false, result.get(0).getCompleted());
+        assertFalse(result.get(0).getCompleted());
     }
 
     @Test
     void shouldGetTodosSortedByDueDate() {
-
-        // GIVEN
-        Long userId = 1L;
-
         User user = new User();
         user.setUsername("julia");
 
@@ -292,14 +338,11 @@ public class TodoServiceTest {
         secondTodo.setDueDate(LocalDateTime.of(2026, 9, 15, 18, 0));
         secondTodo.setUser(user);
 
-        when(todoRepository.findByUserIdOrderByDueDateAsc(userId))
-                .thenReturn(java.util.List.of(firstTodo, secondTodo));
+        when(userRepository.findByUsername("julia")).thenReturn(Optional.of(user));
+        when(todoRepository.findByUserIdOrderByDueDateAsc(user.getId())).thenReturn(List.of(firstTodo, secondTodo));
 
-        // WHEN
-        java.util.List<TodoResponseDto> result =
-                todoService.getTodosSortedByDueDate(userId);
+        List<TodoResponseDto> result = todoService.getTodosSortedByDueDateByUsername("julia");
 
-        // THEN
         assertEquals(2, result.size());
         assertEquals("Pierwsze zadanie", result.get(0).getTitle());
         assertEquals("Drugie zadanie", result.get(1).getTitle());
@@ -307,9 +350,6 @@ public class TodoServiceTest {
 
     @Test
     void shouldSearchTodosByTitle() {
-
-        // GIVEN
-        Long userId = 1L;
         String title = "projekt";
 
         User user = new User();
@@ -320,47 +360,32 @@ public class TodoServiceTest {
         todo.setCompleted(false);
         todo.setUser(user);
 
-        when(todoRepository.findByUserIdAndTitleContainingIgnoreCase(userId, title))
-                .thenReturn(java.util.List.of(todo));
+        when(userRepository.findByUsername("julia")).thenReturn(Optional.of(user));
+        when(todoRepository.findByUserIdAndTitleContainingIgnoreCase(user.getId(), title)).thenReturn(List.of(todo));
 
-        // WHEN
-        java.util.List<TodoResponseDto> result =
-                todoService.searchTodos(userId, title);
+        List<TodoResponseDto> result = todoService.searchTodosByUsername("julia", title);
 
-        // THEN
         assertEquals(1, result.size());
         assertEquals("Projekt Java", result.get(0).getTitle());
     }
 
     @Test
     void shouldGetTodosPage() {
-
-        // GIVEN
-        Long userId = 1L;
+        User user = new User();
+        user.setUsername("julia");
 
         Todo todo = new Todo();
         todo.setTitle("Zadanie");
         todo.setCompleted(false);
-
-        User user = new User();
-        user.setUsername("julia");
         todo.setUser(user);
 
-        org.springframework.data.domain.Page<Todo> todoPage =
-                new org.springframework.data.domain.PageImpl<>(
-                        java.util.List.of(todo)
-                );
+        Page<Todo> todoPage = new PageImpl<>(List.of(todo));
 
-        when(todoRepository.findByUserId(
-                org.mockito.ArgumentMatchers.eq(userId),
-                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)
-        )).thenReturn(todoPage);
+        when(userRepository.findByUsername("julia")).thenReturn(Optional.of(user));
+        when(todoRepository.findByUserId(eq(user.getId()), any(Pageable.class))).thenReturn(todoPage);
 
-        // WHEN
-        org.springframework.data.domain.Page<TodoResponseDto> result =
-                todoService.getTodosPage(userId, 0, 5, "dueDate", "asc");
+        Page<TodoResponseDto> result = todoService.getTodosPageByUsername("julia", 0, 5, "dueDate", "asc");
 
-        // THEN
         assertEquals(1, result.getContent().size());
         assertEquals("Zadanie", result.getContent().get(0).getTitle());
     }
